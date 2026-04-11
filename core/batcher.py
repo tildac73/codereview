@@ -12,7 +12,7 @@ def batch_hunks(hunks: list[Hunk]) -> list[Batch]:
 
   #Sort the hunks into batches based on the number of total lines
   batches = []
-  for file, file_hunks in file_groups:
+  for file_hunks in file_groups.values():
     current_batch = []
     current_lines = 0
 

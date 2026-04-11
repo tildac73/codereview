@@ -1,7 +1,3 @@
-"""
-Maps file extensions to language names for the LLM prompt context.
-"""
-
 EXTENSION_MAP = {
     ".py": "python",
     ".ts": "typescript",

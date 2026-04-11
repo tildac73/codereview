@@ -53,20 +53,25 @@ def test_analyze_batch_returns_review_comments():
 
 def test_call_with_retry_retries_on_rate_limit_then_succeeds():
     mock_response = make_api_response("ok")
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = [
+        anthropic.RateLimitError("rate limited", response=MagicMock(), body={}),
+        mock_response,
+    ]
     with patch("llm.client.time.sleep"):
-        with patch("llm.client.client.messages.create", side_effect=[
-            anthropic.RateLimitError("rate limited", response=MagicMock(), body={}),
-            mock_response,
-        ]) as mock_create:
+        with patch("llm.client._get_client", return_value=mock_client):
             result = call_with_retry(model="m", system="s", user_message="u", max_tokens=100)
 
-    assert mock_create.call_count == 2
+    assert mock_client.messages.create.call_count == 2
     assert result == mock_response
 
 
 def test_call_with_retry_raises_after_exhausting_retries():
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = anthropic.RateLimitError(
+        "rate limited", response=MagicMock(), body={}
+    )
     with patch("llm.client.time.sleep"):
-        with patch("llm.client.client.messages.create",
-                   side_effect=anthropic.RateLimitError("rate limited", response=MagicMock(), body={})):
+        with patch("llm.client._get_client", return_value=mock_client):
             with pytest.raises(anthropic.RateLimitError):
                 call_with_retry(model="m", system="s", user_message="u", max_tokens=100, retries=3)

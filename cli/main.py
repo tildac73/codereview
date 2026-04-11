@@ -3,6 +3,16 @@ import hashlib
 import json
 from typing import Optional
 from pathlib import Path
+from core.diff_parser import get_diff_from_git, parse_diff
+from core.batcher import batch_hunks
+from llm.client import analyze_batch
+from storage.repository import save_run
+from storage.database import init_db
+from core.models import Run
+from dotenv import load_dotenv
+
+load_dotenv()
+init_db()
 
 app = typer.Typer()
 
@@ -19,7 +29,7 @@ def review(
     output: str = typer.Option("terminal", help="terminal | json | server"),
 ):
 
-   #Check for any errors and in CLI and fail if present
+   #Check for any errors in CLI and fail if present
    if not diff and not pr:
       typer.echo("Error: provide either --diff or --pr", err=True)
       raise typer.Exit(1)
@@ -48,7 +58,7 @@ def review(
    #Send to Claude to analyse the diff in batches, and save these to all_comments
    all_comments = []
    for batch in batches:
-    all_comments.extend(analyze_batch(batch, prompt_version))
+      all_comments.extend(analyze_batch(batch, prompt_version))
 
    #Construct a run object for the code review, including a unique run hash
    git_ref = diff or pr
@@ -114,7 +124,7 @@ def render_terminal(comments):
          style = SEVERITY_STYLES.get(c.severity, "")
          counts[c.severity] += 1
          table.add_row(
-               str(c.line),
+               str(c.line_start),
                f"[{style}]{c.severity}[/{style}]",
                c.category,
                c.title,

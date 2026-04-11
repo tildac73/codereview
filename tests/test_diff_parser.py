@@ -8,7 +8,7 @@ diff --git a/src/auth.py b/src/auth.py
 index abc123..def456 100644
 --- a/src/auth.py
 +++ b/src/auth.py
-@@ -10,6 +10,6 @@ def login(user, password):
+@@ -10,3 +10,3 @@ def login(user, password):
      db = get_db()
 -    query = f"SELECT * FROM users WHERE name = {user}"
 +    query = "SELECT * FROM users WHERE name = ?"

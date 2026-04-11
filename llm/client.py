@@ -1,11 +1,16 @@
 import anthropic
-import json
 import time
 from core.models import Batch, ReviewComment
 from llm.prompt_loader import load_prompt
 from llm.response_parser import parse_response
 
-client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env
+_client = None
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic()
+    return _client
 
 def analyze_batch(batch: Batch, prompt_version: str = None) -> list[ReviewComment]:
     #Load the prompt to send to the LLM
@@ -38,7 +43,7 @@ def analyze_batch(batch: Batch, prompt_version: str = None) -> list[ReviewCommen
 def call_with_retry(model, system, user_message, max_tokens, retries=3):
     for attempt in range(retries):
         try:
-            return client.messages.create(
+            return _get_client().messages.create(
                 model=model,
                 max_tokens=max_tokens,
                 system=system,
